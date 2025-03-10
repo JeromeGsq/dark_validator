@@ -6,7 +6,7 @@ part of 'feeder.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$feederEdfSignalHash() => r'6e8c256c7cf053e5322cbb54b2ea3cab1ee67b26';
+String _$feederEdfSignalHash() => r'b7a0889c69ce7ed929d656ef9c541930b8529bd8';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -29,16 +29,13 @@ class _SystemHash {
   }
 }
 
-abstract class _$FeederEdfSignal
-    extends BuildlessAutoDisposeStreamNotifier<List<Offset>?> {
+abstract class _$FeederEdfSignal extends BuildlessNotifier<List<Offset>> {
   late final String edfFilePath;
   late final int start;
-  late final int speed;
 
-  Stream<List<Offset>?> build({
+  List<Offset> build({
     required String edfFilePath,
     int start = 0,
-    int speed = 1,
   });
 }
 
@@ -47,7 +44,7 @@ abstract class _$FeederEdfSignal
 const feederEdfSignalProvider = FeederEdfSignalFamily();
 
 /// See also [FeederEdfSignal].
-class FeederEdfSignalFamily extends Family<AsyncValue<List<Offset>?>> {
+class FeederEdfSignalFamily extends Family<List<Offset>> {
   /// See also [FeederEdfSignal].
   const FeederEdfSignalFamily();
 
@@ -55,12 +52,10 @@ class FeederEdfSignalFamily extends Family<AsyncValue<List<Offset>?>> {
   FeederEdfSignalProvider call({
     required String edfFilePath,
     int start = 0,
-    int speed = 1,
   }) {
     return FeederEdfSignalProvider(
       edfFilePath: edfFilePath,
       start: start,
-      speed: speed,
     );
   }
 
@@ -71,7 +66,6 @@ class FeederEdfSignalFamily extends Family<AsyncValue<List<Offset>?>> {
     return call(
       edfFilePath: provider.edfFilePath,
       start: provider.start,
-      speed: provider.speed,
     );
   }
 
@@ -91,18 +85,16 @@ class FeederEdfSignalFamily extends Family<AsyncValue<List<Offset>?>> {
 }
 
 /// See also [FeederEdfSignal].
-class FeederEdfSignalProvider extends AutoDisposeStreamNotifierProviderImpl<
-    FeederEdfSignal, List<Offset>?> {
+class FeederEdfSignalProvider
+    extends NotifierProviderImpl<FeederEdfSignal, List<Offset>> {
   /// See also [FeederEdfSignal].
   FeederEdfSignalProvider({
     required String edfFilePath,
     int start = 0,
-    int speed = 1,
   }) : this._internal(
           () => FeederEdfSignal()
             ..edfFilePath = edfFilePath
-            ..start = start
-            ..speed = speed,
+            ..start = start,
           from: feederEdfSignalProvider,
           name: r'feederEdfSignalProvider',
           debugGetCreateSourceHash:
@@ -114,7 +106,6 @@ class FeederEdfSignalProvider extends AutoDisposeStreamNotifierProviderImpl<
               FeederEdfSignalFamily._allTransitiveDependencies,
           edfFilePath: edfFilePath,
           start: start,
-          speed: speed,
         );
 
   FeederEdfSignalProvider._internal(
@@ -126,21 +117,18 @@ class FeederEdfSignalProvider extends AutoDisposeStreamNotifierProviderImpl<
     required super.from,
     required this.edfFilePath,
     required this.start,
-    required this.speed,
   }) : super.internal();
 
   final String edfFilePath;
   final int start;
-  final int speed;
 
   @override
-  Stream<List<Offset>?> runNotifierBuild(
+  List<Offset> runNotifierBuild(
     covariant FeederEdfSignal notifier,
   ) {
     return notifier.build(
       edfFilePath: edfFilePath,
       start: start,
-      speed: speed,
     );
   }
 
@@ -151,8 +139,7 @@ class FeederEdfSignalProvider extends AutoDisposeStreamNotifierProviderImpl<
       override: FeederEdfSignalProvider._internal(
         () => create()
           ..edfFilePath = edfFilePath
-          ..start = start
-          ..speed = speed,
+          ..start = start,
         from: from,
         name: null,
         dependencies: null,
@@ -160,14 +147,12 @@ class FeederEdfSignalProvider extends AutoDisposeStreamNotifierProviderImpl<
         debugGetCreateSourceHash: null,
         edfFilePath: edfFilePath,
         start: start,
-        speed: speed,
       ),
     );
   }
 
   @override
-  AutoDisposeStreamNotifierProviderElement<FeederEdfSignal, List<Offset>?>
-      createElement() {
+  NotifierProviderElement<FeederEdfSignal, List<Offset>> createElement() {
     return _FeederEdfSignalProviderElement(this);
   }
 
@@ -175,8 +160,7 @@ class FeederEdfSignalProvider extends AutoDisposeStreamNotifierProviderImpl<
   bool operator ==(Object other) {
     return other is FeederEdfSignalProvider &&
         other.edfFilePath == edfFilePath &&
-        other.start == start &&
-        other.speed == speed;
+        other.start == start;
   }
 
   @override
@@ -184,7 +168,6 @@ class FeederEdfSignalProvider extends AutoDisposeStreamNotifierProviderImpl<
     var hash = _SystemHash.combine(0, runtimeType.hashCode);
     hash = _SystemHash.combine(hash, edfFilePath.hashCode);
     hash = _SystemHash.combine(hash, start.hashCode);
-    hash = _SystemHash.combine(hash, speed.hashCode);
 
     return _SystemHash.finish(hash);
   }
@@ -192,29 +175,23 @@ class FeederEdfSignalProvider extends AutoDisposeStreamNotifierProviderImpl<
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-mixin FeederEdfSignalRef
-    on AutoDisposeStreamNotifierProviderRef<List<Offset>?> {
+mixin FeederEdfSignalRef on NotifierProviderRef<List<Offset>> {
   /// The parameter `edfFilePath` of this provider.
   String get edfFilePath;
 
   /// The parameter `start` of this provider.
   int get start;
-
-  /// The parameter `speed` of this provider.
-  int get speed;
 }
 
 class _FeederEdfSignalProviderElement
-    extends AutoDisposeStreamNotifierProviderElement<FeederEdfSignal,
-        List<Offset>?> with FeederEdfSignalRef {
+    extends NotifierProviderElement<FeederEdfSignal, List<Offset>>
+    with FeederEdfSignalRef {
   _FeederEdfSignalProviderElement(super.provider);
 
   @override
   String get edfFilePath => (origin as FeederEdfSignalProvider).edfFilePath;
   @override
   int get start => (origin as FeederEdfSignalProvider).start;
-  @override
-  int get speed => (origin as FeederEdfSignalProvider).speed;
 }
 
 String _$feederSignalHash() => r'3192f9603151f40bda1f9e2fa827154350bb7891';

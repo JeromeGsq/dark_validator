@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:dark_validator/packages/charts/static_custom_painter.dart';
 import 'package:dark_validator/packages/charts/static_line_chart/static_line_chart.dart';
 import 'package:dark_validator/utils/list.dart';
@@ -17,6 +19,7 @@ class ChartStreamZoom extends _$ChartStreamZoom {
 
   void update(int value) {
     state = state + value;
+    state = max(100, state);
   }
 }
 

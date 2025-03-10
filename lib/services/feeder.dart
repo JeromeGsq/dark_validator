@@ -6,38 +6,24 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'feeder.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class FeederEdfSignal extends _$FeederEdfSignal {
   final List<Offset> _points = [];
   int _counter = 0;
 
   @override
-  Stream<List<Offset>?> build({required String edfFilePath, int start = 0, int speed = 1}) {
-    final edfState = ref.watch(edfFileLoaderProvider(path: edfFilePath));
-
+  List<Offset> build({required String edfFilePath, int start = 0}) {
     _counter = start;
+    return _points;
+  }
 
-    return edfState.when(
-      data: (data) => Stream.periodic(const Duration(milliseconds: 40) ~/ speed).map(
-        (_) {
-          final a = data?.signals.first.samples[_counter];
-          final point = Offset(_counter.toDouble(), a?.dy ?? 0);
-          _points.add(point);
-          _counter++;
-          return _points;
-        },
-      ),
-      error: (_, __) => Stream.periodic(const Duration(milliseconds: 40)).map(
-        (_) {
-          return null;
-        },
-      ),
-      loading: () => Stream.periodic(const Duration(milliseconds: 40)).map(
-        (_) {
-          return null;
-        },
-      ),
-    );
+  Future<void> update() async {
+    final edfState = ref.watch(edfFileLoaderProvider(path: edfFilePath));
+    final dy = edfState.value?.signals.first.samples[_counter].dy ?? 0;
+    _points.add(Offset(_counter.toDouble(), dy));
+    _counter++;
+
+    state = _points;
   }
 }
 

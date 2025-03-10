@@ -8,7 +8,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'edf_loader.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class EdfFileLoader extends _$EdfFileLoader {
   @override
   FutureOr<EdfData<Offset>?> build({required String? path}) async {

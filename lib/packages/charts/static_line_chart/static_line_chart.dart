@@ -86,27 +86,17 @@ class StaticChartLinePainter extends StaticAndDynamicPainter {
     final text = TextPainter(
       text: TextSpan(
         text: title,
-        style: TextStyle(
-          fontSize: 16 * textScaler,
+        style: const TextStyle(
+          fontSize: 16,
           fontWeight: FontWeight.bold,
+          color: Colors.white,
         ),
       ),
     )
       ..textDirection = textDirection
       ..layout();
 
-    if (textDirection == TextDirection.rtl) {
-      // Flip the x-axis
-      canvas.save();
-      canvas.scale(-1, 1);
-
-      final textX = -pHorizontal - text.width;
-      text.paint(canvas, Offset(textX, 0));
-      canvas.restore();
-    } else {
-      final textX = pHorizontal;
-      text.paint(canvas, Offset(textX, 0));
-    }
+    text.paint(canvas, const Offset(0, 0));
   }
 
   void _drawX(Canvas canvas, Size size) {
@@ -173,7 +163,7 @@ class StaticChartLinePainter extends StaticAndDynamicPainter {
           text: values[(i * (values.length - 1) ~/ 24)].dx.toStringAsFixed(1),
           style: TextStyle(
             fontSize: 12 * textScaler,
-            color: Colors.grey[600],
+            color: Colors.white,
           ),
         ),
         textDirection: textDirection,
@@ -210,7 +200,7 @@ class StaticChartLinePainter extends StaticAndDynamicPainter {
           text: _formatYAxisValue(value),
           style: TextStyle(
             fontSize: 12 * textScaler,
-            color: Colors.grey[600],
+            color: Colors.white,
           ),
         ),
         textDirection: TextDirection.ltr,
@@ -229,12 +219,6 @@ class StaticChartLinePainter extends StaticAndDynamicPainter {
         text.paint(canvas, Offset(textX, textY));
       }
     }
-  }
-
-  // Helper method to format hour labels
-  String _formatHourLabel(int hour) {
-    final time = DateTime(0, 0, 0, (hour + 12) % 24, 0);
-    return '${time.hour.toString().padLeft(2, '0')}:00';
   }
 
   // Helper method to format Y-axis values
@@ -257,7 +241,7 @@ class StaticChartLinePainter extends StaticAndDynamicPainter {
     final valueWidth = size.width / (end - start);
 
     final style = Paint()
-      ..color = Colors.blue
+      ..color = Colors.teal
       ..isAntiAlias = true
       ..filterQuality = FilterQuality.high
       ..strokeWidth = 2
@@ -337,62 +321,5 @@ class StaticChartLinePainter extends StaticAndDynamicPainter {
         );
       }
     }
-  }
-
-  void _drawSelectionRange(Canvas canvas, Size size) {
-    if (milliseconds == 0.0) {
-      return;
-    }
-
-    if (values.isEmpty) {
-      return;
-    }
-
-    if (startZoomablePoint == null || endZoomablePoint == null) {
-      return;
-    }
-
-    final start = values.first.dx;
-    final end = values.last.dx;
-    final valueWidth = size.width / (end - start);
-
-    // Calculate the selection range positions
-    final startX = pHorizontal + (startZoomablePoint!.dx - start) * valueWidth;
-    final endX = pHorizontal + (endZoomablePoint!.dx - start) * valueWidth;
-
-    final paint = Paint()
-      ..color = Colors.blueGrey.withValues(alpha: 0.2)
-      ..style = PaintingStyle.fill;
-
-    canvas.drawRect(
-      Rect.fromLTRB(
-        startX,
-        pVertical - 10,
-        endX,
-        size.height + pVertical,
-      ),
-      paint,
-    );
-
-    /*
-    // Add pin on top
-    final pinPaint = Paint()
-      ..color = Colors.blueGrey.withValues(alpha: 0.2)
-      ..style = PaintingStyle.fill;
-
-    const pinWidth = 20.0;
-    const pinHeight = 15.0;
-    final center = (endX - startX) / 2;
-
-    canvas.drawRect(
-      Rect.fromLTWH(
-        startX + center - pinWidth / 2,
-        pVertical - pinHeight,
-        pinWidth,
-        pinHeight,
-      ),
-      pinPaint,
-    );
-    */
   }
 }
