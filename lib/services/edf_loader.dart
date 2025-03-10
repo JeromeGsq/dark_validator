@@ -3,8 +3,8 @@ import 'dart:ui';
 import 'package:dark_validator/packages/edf_reader_dart/edf_data.dart';
 import 'package:dark_validator/packages/edf_reader_dart/edf_plus_reader.dart';
 import 'package:dark_validator/utils/logger.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Define the state for the EDF loader
 sealed class EdfLoadState {

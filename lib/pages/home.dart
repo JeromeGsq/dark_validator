@@ -17,19 +17,11 @@ class Home extends ConsumerWidget {
       body: Center(
         child: Column(
           children: [
-            TextButton(
-              onPressed: () async {
-                final result = await FilePicker.platform.pickFiles(
-                  type: FileType.custom,
-                  allowedExtensions: ['edf'],
-                );
-
-                if (result != null) {
-                  final String filePath = result.files.single.path!;
-                  await ref.read(edfLoaderProvider.notifier).loadEdfFile(filePath);
-                }
+            ElevatedButton(
+              onPressed: () {
+                ref.read(edfLoaderProvider.notifier).pickAndLoadFile();
               },
-              child: const Text('Pick EDF File'),
+              child: const Text('Sélectionner un fichier EDF'),
             ),
             // Handle different states
             switch (edfState) {
