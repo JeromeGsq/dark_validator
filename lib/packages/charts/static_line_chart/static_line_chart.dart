@@ -73,34 +73,7 @@ class StaticChartLinePainter extends StaticAndDynamicPainter {
   }
 
   @override
-  void dynamicPaint(Canvas canvas, Size size) {
-    final tPadding = textScaler == 1 ? 0.0 : 14 * textScaler;
-    size = Size(
-      size.width - pHorizontal * 2 - (tPadding * 2),
-      size.height - pVertical * 2 - (tPadding * 2),
-    );
-
-    // If the values are the same, we need to set boundaries to 0 and double the value
-    if (minValue == maxValue) {
-      minValue = 0;
-      maxValue = maxValue * 2;
-    }
-
-    canvas.save();
-    canvas.translate(tPadding * 1.5, tPadding);
-
-    _drawSelectionRange(canvas, size);
-    _drawLensSelection(canvas, size);
-
-    canvas.restore();
-
-    canvas.clipRect(Rect.fromLTWH(
-      pHorizontal,
-      pVertical,
-      size.width,
-      size.height,
-    ));
-  }
+  void dynamicPaint(Canvas canvas, Size size) {}
 
   void _drawBackground(Canvas canvas, Size size) {
     canvas.drawRect(
@@ -113,6 +86,10 @@ class StaticChartLinePainter extends StaticAndDynamicPainter {
     final text = TextPainter(
       text: TextSpan(
         text: title,
+        style: TextStyle(
+          fontSize: 16 * textScaler,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     )
       ..textDirection = textDirection
@@ -185,27 +162,33 @@ class StaticChartLinePainter extends StaticAndDynamicPainter {
         }
       }
 
+      final x = i * gap * (size.width);
+
+      if (values.isEmpty) {
+        continue;
+      }
+
       final text = TextPainter(
         text: TextSpan(
-          // Start at 12h00 to 12h00
-          text: DateTime(0, 0, 0, i + 12, 0).toString(),
+          text: values[(i * (values.length - 1) ~/ 24)].dx.toStringAsFixed(1),
+          style: TextStyle(
+            fontSize: 12 * textScaler,
+            color: Colors.grey[600],
+          ),
         ),
-      )
-        ..textDirection = textDirection
-        ..layout();
+        textDirection: textDirection,
+      )..layout();
 
       final textY = size.height + pVertical + 10;
+
       if (textDirection == TextDirection.rtl) {
-        // Flip the x-axis
         canvas.save();
         canvas.scale(-1, 1);
-
-        final textX = -(pHorizontal + i * gap * (size.width) + text.width / 2);
+        final textX = -(pHorizontal + x + text.width / 2);
         text.paint(canvas, Offset(textX, textY));
-
         canvas.restore();
       } else {
-        final textX = pHorizontal + i * gap * (size.width) - text.width / 2;
+        final textX = pHorizontal + x - text.width / 2;
         text.paint(canvas, Offset(textX, textY));
       }
     }
@@ -218,23 +201,26 @@ class StaticChartLinePainter extends StaticAndDynamicPainter {
     }).toList();
 
     for (int i = 0; i < legendScale.length; i++) {
-      final value = legendScale[i];
+      final value = legendScale[legendScale.length - 1 - i]; // Reverse order for Y-axis
       final height = size.height;
       final yPos = pVertical + (height * i) / (legendScale.length - 1);
 
       final text = TextPainter(
         text: TextSpan(
-          text: value.toStringAsFixed(2),
+          text: _formatYAxisValue(value),
+          style: TextStyle(
+            fontSize: 12 * textScaler,
+            color: Colors.grey[600],
+          ),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
+
       final textY = yPos - text.height / 2;
 
       if (textDirection == TextDirection.rtl) {
-        // Flip the x-axis
         canvas.save();
         canvas.scale(-1, 1);
-
         final textX = -pHorizontal + 10;
         text.paint(canvas, Offset(textX, textY));
         canvas.restore();
@@ -243,6 +229,20 @@ class StaticChartLinePainter extends StaticAndDynamicPainter {
         text.paint(canvas, Offset(textX, textY));
       }
     }
+  }
+
+  // Helper method to format hour labels
+  String _formatHourLabel(int hour) {
+    final time = DateTime(0, 0, 0, (hour + 12) % 24, 0);
+    return '${time.hour.toString().padLeft(2, '0')}:00';
+  }
+
+  // Helper method to format Y-axis values
+  String _formatYAxisValue(double value) {
+    if (value >= 1000) {
+      return '${(value / 1000).toStringAsFixed(1)}k';
+    }
+    return value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 1);
   }
 
   void _drawLinesChart(Canvas canvas, Size size) {
@@ -255,39 +255,17 @@ class StaticChartLinePainter extends StaticAndDynamicPainter {
     final start = values.first.dx;
     final end = values.last.dx;
     final valueWidth = size.width / (end - start);
-    final diffs = <double>[];
-
-    for (int i = 0; i < values.length - 1; i++) {
-      diffs.add(values[i].dx - values[i + 1].dx);
-    }
-    final space = diffs.reduce((a, b) => a + b) / diffs.length;
 
     final style = Paint()
       ..color = Colors.blue
-      ..isAntiAlias = false
-      ..filterQuality = FilterQuality.low
-      ..strokeWidth = 1.5
+      ..isAntiAlias = true
+      ..filterQuality = FilterQuality.high
+      ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
-    // Calculate how many points we should draw based on animation progress
-    final pointsToDraw = (values.length * (animationProgress ?? 1.0)).floor();
-
-    for (int i = 0; i < pointsToDraw - 1; i++) {
-      // With the bounds12h, you have empty datas, skip them
-      if (values[i].dy == 0.0 || values[i + 1].dy == 0.0) {
-        // Skip this iteration, there is no data to draw
-        continue;
-      }
-
+    for (int i = 0; i < values.length - 1; i++) {
       final x1 = values[i].dx - start;
       final x2 = values[i + 1].dx - start;
-
-      // Check the space between the two points
-      // Skip if the space difference is too large small to prevent drawing gaps between points
-      // I must use this approximation because the data are sometimes compressed by simplify()
-      if (values[i].dx - values[i + 1].dx <= space) {
-        continue;
-      }
 
       final y1 = (maxValue - values[i].dy.toDouble()) / (maxValue - minValue);
       final y2 = (maxValue - values[i + 1].dy.toDouble()) / (maxValue - minValue);
@@ -295,38 +273,17 @@ class StaticChartLinePainter extends StaticAndDynamicPainter {
         continue;
       }
 
-      // Optionally fade in the last segment
-      if (i == pointsToDraw - 2) {
-        final fadeProgress = (values.length * (animationProgress ?? 1.0)) % 1.0;
-        final originalColor = style.color;
-        style.color = style.color.withAlpha(fadeProgress.toInt());
-
-        canvas.drawLine(
-          Offset(
-            pHorizontal + x1 * valueWidth,
-            size.height - (size.height * y1 - pVertical),
-          ),
-          Offset(
-            pHorizontal + x2 * valueWidth,
-            size.height - (size.height * y2 - pVertical),
-          ),
-          style,
-        );
-
-        style.color = originalColor;
-      } else {
-        canvas.drawLine(
-          Offset(
-            pHorizontal + x1 * valueWidth,
-            size.height - (size.height * y1 - pVertical),
-          ),
-          Offset(
-            pHorizontal + x2 * valueWidth,
-            size.height - (size.height * y2 - pVertical),
-          ),
-          style,
-        );
-      }
+      canvas.drawLine(
+        Offset(
+          pHorizontal + x1 * valueWidth,
+          size.height - (size.height * y1 - pVertical),
+        ),
+        Offset(
+          pHorizontal + x2 * valueWidth,
+          size.height - (size.height * y2 - pVertical),
+        ),
+        style,
+      );
     }
   }
 
@@ -437,72 +394,5 @@ class StaticChartLinePainter extends StaticAndDynamicPainter {
       pinPaint,
     );
     */
-  }
-
-  void _drawLensSelection(Canvas canvas, Size size) {
-    if (milliseconds == 0.0) {
-      return;
-    }
-
-    if (values.isEmpty || startZoomablePoint == null || endZoomablePoint == null) {
-      return;
-    }
-
-    final _size = Size(size.width - 200, size.height + 50);
-    final start = values.first.dx;
-    final end = values.last.dx;
-    final valueWidth = size.width / (end - start);
-
-    // Calculate the selection range positions
-    final startX = pHorizontal + (startZoomablePoint!.dx - start) * valueWidth;
-    final endX = pHorizontal + (endZoomablePoint!.dx - start) * valueWidth;
-
-    // Calculate middle point for the lens curve
-    final dx = (startX + endX) / 2;
-
-    if (startZoomablePoint == null || endZoomablePoint == null) {
-      return;
-    }
-
-    // Calculate the selection range positions
-    final width = (endX - startX) / 2;
-
-    // Draw rounded shape from top left to Offset "position"
-    final backgroundPath = Path()
-      ..moveTo(pHorizontal + 200, _size.height + pVertical - 1)
-      ..cubicTo(
-        pHorizontal + (dx - pHorizontal) / 2,
-        _size.height + pVertical - 20,
-        dx - width,
-        _size.height + 20,
-        dx - width,
-        _size.height - 25,
-      )
-      ..cubicTo(
-        dx - width,
-        _size.height - 25,
-        dx + width,
-        _size.height - 25,
-        dx + width,
-        _size.height - 25,
-      )
-      ..cubicTo(
-        dx + width,
-        _size.height + 20,
-        _size.width - (_size.width - dx - 10) / 2,
-        _size.height + pVertical - 25,
-        _size.width + pHorizontal,
-        _size.height + pVertical,
-      );
-
-    final paint = Paint()
-      ..color = Colors.blueGrey.withValues(alpha: 0.2)
-      ..strokeWidth = 2
-      ..style = PaintingStyle.fill;
-
-    canvas.drawPath(
-      backgroundPath..close(),
-      paint,
-    );
   }
 }
