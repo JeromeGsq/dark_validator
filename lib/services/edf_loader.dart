@@ -1,14 +1,29 @@
-import 'dart:ui';
-
 import 'package:dark_validator/packages/edf_reader_dart/edf_data.dart';
 import 'package:dark_validator/packages/edf_reader_dart/edf_plus_reader.dart';
+import 'package:dark_validator/utils/file.dart';
 import 'package:dark_validator/utils/logger.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-// Create the provider
-class EdfLoaderNotifier extends StateNotifier<AsyncValue<EdfData<Offset>?>> {
-  EdfLoaderNotifier() : super(const AsyncValue.data(null));
+part 'edf_loader.g.dart';
+
+@riverpod
+class EdfFileLoader extends _$EdfFileLoader {
+  @override
+  FutureOr<EdfData<Offset>?> build({required String? path}) async {
+    if (path == null) {
+      return null;
+    }
+
+    if (path.contains('assets')) {
+      path = await getFilePath(path);
+    }
+
+    await loadEdfFile(path);
+
+    return state.value;
+  }
 
   Future<void> pickAndLoadFile() async {
     try {
@@ -18,7 +33,7 @@ class EdfLoaderNotifier extends StateNotifier<AsyncValue<EdfData<Offset>?>> {
       );
 
       if (result != null) {
-        final String filePath = result.files.single.path!;
+        final filePath = result.files.single.path!;
         await loadEdfFile(filePath);
       }
     } catch (e) {
@@ -35,13 +50,4 @@ class EdfLoaderNotifier extends StateNotifier<AsyncValue<EdfData<Offset>?>> {
       return reader.read<Offset>();
     });
   }
-
-  void reset() {
-    state = const AsyncValue.data(null);
-  }
 }
-
-// Provider definition
-final edfLoaderProvider = StateNotifierProvider<EdfLoaderNotifier, AsyncValue<EdfData<Offset>?>>((ref) {
-  return EdfLoaderNotifier();
-});
