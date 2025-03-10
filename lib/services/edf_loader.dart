@@ -6,32 +6,9 @@ import 'package:dark_validator/utils/logger.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Define the state for the EDF loader
-sealed class EdfLoadState {
-  const EdfLoadState();
-}
-
-class EdfLoadInitial extends EdfLoadState {
-  const EdfLoadInitial();
-}
-
-class EdfLoadLoading extends EdfLoadState {
-  const EdfLoadLoading();
-}
-
-class EdfLoadSuccess<T> extends EdfLoadState {
-  const EdfLoadSuccess(this.data);
-  final EdfData<T> data;
-}
-
-class EdfLoadError extends EdfLoadState {
-  const EdfLoadError(this.message);
-  final String message;
-}
-
 // Create the provider
-class EdfLoaderNotifier extends StateNotifier<EdfLoadState> {
-  EdfLoaderNotifier() : super(const EdfLoadInitial());
+class EdfLoaderNotifier extends StateNotifier<AsyncValue<EdfData<Offset>?>> {
+  EdfLoaderNotifier() : super(const AsyncValue.data(null));
 
   Future<void> pickAndLoadFile() async {
     try {
@@ -46,30 +23,25 @@ class EdfLoaderNotifier extends StateNotifier<EdfLoadState> {
       }
     } catch (e) {
       logError('Failed to pick file: ${e.toString()}', who: this);
-      state = EdfLoadError(e.toString());
+      state = AsyncValue.error(e, StackTrace.current);
     }
   }
 
   Future<void> loadEdfFile(String filePath) async {
-    try {
-      state = const EdfLoadLoading();
+    state = const AsyncValue.loading();
 
+    state = await AsyncValue.guard(() async {
       final reader = EDFPlusReader(filePath);
-      final data = await reader.read<Offset>();
-
-      state = EdfLoadSuccess(data);
-    } catch (e) {
-      logError('Failed to load EDF file: ${e.toString()}', who: this);
-      state = EdfLoadError(e.toString());
-    }
+      return reader.read<Offset>();
+    });
   }
 
   void reset() {
-    state = const EdfLoadInitial();
+    state = const AsyncValue.data(null);
   }
 }
 
 // Provider definition
-final edfLoaderProvider = StateNotifierProvider<EdfLoaderNotifier, EdfLoadState>((ref) {
+final edfLoaderProvider = StateNotifierProvider<EdfLoaderNotifier, AsyncValue<EdfData<Offset>?>>((ref) {
   return EdfLoaderNotifier();
 });

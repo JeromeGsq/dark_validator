@@ -1,5 +1,4 @@
 import 'package:dark_validator/services/edf_loader.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,13 +22,11 @@ class Home extends ConsumerWidget {
               },
               child: const Text('Sélectionner un fichier EDF'),
             ),
-            // Handle different states
-            switch (edfState) {
-              EdfLoadInitial() => const Text('Select a file to begin'),
-              EdfLoadLoading() => const CircularProgressIndicator(),
-              EdfLoadSuccess(data: final _) => const Text('File loaded successfully!'),
-              EdfLoadError(message: final message) => Text('Error: $message'),
-            },
+            edfState.when(
+              data: (data) => Text('File: ${data?.header.startDate}'),
+              error: (error, stackTrace) => Text('Error: ${error.toString()}'),
+              loading: () => const CircularProgressIndicator(),
+            ),
           ],
         ),
       ),

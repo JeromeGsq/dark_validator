@@ -53,7 +53,7 @@ class EDFPlusReader {
     try {
       final result = await _readHeader();
       result.startDateTime; // Should be correct if not encrypted
-      logWarning('Successfully read non-encrypted EDF file', who: this);
+      logSuccess('Successfully read non-encrypted EDF file', who: this);
     } catch (e) {
       logError('Error reading EDF file: ${e.toString()}', who: this);
     }
