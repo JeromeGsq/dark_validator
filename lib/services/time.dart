@@ -9,14 +9,14 @@ class Time extends _$Time {
     return 0;
   }
 
-  void toggle() {
-    state = state == 1 ? 0 : 1;
-  }
-
   void update(double value) {
     state = state + value;
     if (state < 0) {
       state = 0;
+    }
+
+    if (state > 10) {
+      state = 10;
     }
   }
 }

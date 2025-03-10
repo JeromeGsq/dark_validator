@@ -1,6 +1,7 @@
 import 'package:dark_validator/services/algo.dart';
 import 'package:dark_validator/services/feeder.dart';
 import 'package:dark_validator/services/time.dart';
+import 'package:dark_validator/widgets/arrow_value.dart';
 import 'package:dark_validator/widgets/chart.dart';
 import 'package:dark_validator/widgets/chart_stream.dart';
 import 'package:flutter/material.dart';
@@ -35,34 +36,58 @@ class _HomeState extends ConsumerState<Home> {
   Future<void> _update() async {
     await Future.delayed(const Duration(milliseconds: 40));
 
+    // 0 == 100000000000ms
+    // 1  == 40ms
+    // 2 == 20ms
+    // 3 == 10ms
+
     while (true) {
-      await Future.delayed(const Duration(milliseconds: 4));
-      if (ref.watch(timeProvider) != 0) {
-        await ref.read(feeder.notifier).update();
+      final timeValue = ref.read(timeProvider);
+      final delay = switch (timeValue) {
+        0 => 0, // Practically infinite
+        1 => 40000,
+        2 => 20000,
+        3 => 10000,
+        4 => 5000,
+        5 => 2000,
+        6 => 1000,
+        7 => 500,
+        8 => 250,
+        9 => 125,
+        10 => 62,
+        _ => 40000,
+      };
 
-        await ref.read(algos['aboveZero']!.notifier).update(
-              feeder: feeder,
-              compute: (buffer) {
-                // Check if most of the buffer is above 0
-                final pointsAboveZero = (buffer.lastOrNull?.dy ?? 0) > 0;
-                return pointsAboveZero ? 1 : 0;
-              },
-            );
-
-        await ref.read(algos['derivative']!.notifier).update(
-              feeder: feeder,
-              compute: (buffer) {
-                if (buffer.length < 2) {
-                  return 0;
-                }
-                final current = buffer.last.dy;
-                final previous = buffer[buffer.length - 2].dy;
-                return current - previous;
-              },
-            );
-
-        setState(() {});
+      if (delay == 0) {
+        await Future.delayed(const Duration(milliseconds: 16));
+        continue;
       }
+
+      await Future.delayed(Duration(microseconds: delay));
+      await ref.read(feeder.notifier).update();
+
+      await ref.read(algos['aboveZero']!.notifier).update(
+            feeder: feeder,
+            compute: (buffer) {
+              // Check if most of the buffer is above 0
+              final pointsAboveZero = (buffer.lastOrNull?.dy ?? 0) > 0;
+              return pointsAboveZero ? 1 : 0;
+            },
+          );
+
+      await ref.read(algos['derivative']!.notifier).update(
+            feeder: feeder,
+            compute: (buffer) {
+              if (buffer.length < 2) {
+                return 0;
+              }
+              final current = buffer.last.dy;
+              final previous = buffer[buffer.length - 2].dy;
+              return current - previous;
+            },
+          );
+
+      setState(() {});
     }
   }
 
@@ -110,7 +135,7 @@ class _HomeState extends ConsumerState<Home> {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 1000)
+                    const SizedBox(height: 1024)
                   ],
                 ),
               ),
@@ -122,31 +147,29 @@ class _HomeState extends ConsumerState<Home> {
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          FloatingActionButton(
-            heroTag: 'pause',
-            onPressed: () {
-              ref.read(timeProvider.notifier).toggle();
+          ArrowValue(
+            label: 'Speed',
+            value: '${ref.watch(timeProvider)}',
+            upper: () {
+              ref.read(timeProvider.notifier).update(1);
             },
-            child: ref.watch(timeProvider) == 0 ? const Icon(Icons.play_arrow) : const Icon(Icons.pause),
+            lower: () {
+              ref.read(timeProvider.notifier).update(-1);
+            },
           ),
           const SizedBox(width: 16),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text('Zoom: ${ref.watch(chartStreamZoomProvider)}'),
-              const SizedBox(height: 16),
-              FloatingActionButton(
-                heroTag: 'zoom_in',
-                onPressed: () => ref.read(chartStreamZoomProvider.notifier).update(-50),
-                child: const Icon(Icons.add),
-              ),
-              const SizedBox(height: 16),
-              FloatingActionButton(
-                heroTag: 'zoom_out',
-                onPressed: () => ref.read(chartStreamZoomProvider.notifier).update(50),
-                child: const Icon(Icons.remove),
-              ),
-            ],
+          ArrowValue(
+            label: 'Samples',
+            value: '${ref.watch(chartStreamZoomProvider)}',
+            upper: () => ref.read(chartStreamZoomProvider.notifier).zoomIn(),
+            lower: () => ref.read(chartStreamZoomProvider.notifier).zoomOut(),
+          ),
+          const SizedBox(width: 16),
+          ArrowValue(
+            label: 'Time Padding',
+            value: '${ref.watch(chartStreamTimePaddingProvider)}',
+            upper: () => ref.read(chartStreamTimePaddingProvider.notifier).zoomOut(),
+            lower: () => ref.read(chartStreamTimePaddingProvider.notifier).zoomIn(),
           ),
         ],
       ),

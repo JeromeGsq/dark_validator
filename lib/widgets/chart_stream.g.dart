@@ -6,7 +6,24 @@ part of 'chart_stream.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$chartStreamZoomHash() => r'117ad97b842400a48776c1c3c836378967f24c10';
+String _$chartStreamTimePaddingHash() =>
+    r'a63162e3f86338ecb192df187dab090c0f76a575';
+
+/// See also [ChartStreamTimePadding].
+@ProviderFor(ChartStreamTimePadding)
+final chartStreamTimePaddingProvider =
+    NotifierProvider<ChartStreamTimePadding, int>.internal(
+  ChartStreamTimePadding.new,
+  name: r'chartStreamTimePaddingProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$chartStreamTimePaddingHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$ChartStreamTimePadding = Notifier<int>;
+String _$chartStreamZoomHash() => r'8f95f8492ed9b63b7bfaba0a031199b14ec18cb1';
 
 /// See also [ChartStreamZoom].
 @ProviderFor(ChartStreamZoom)
