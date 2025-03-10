@@ -6,7 +6,7 @@ part 'time.g.dart';
 class Time extends _$Time {
   @override
   double build() {
-    return 1;
+    return 0;
   }
 
   void toggle() {

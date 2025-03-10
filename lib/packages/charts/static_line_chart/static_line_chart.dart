@@ -160,7 +160,7 @@ class StaticChartLinePainter extends StaticAndDynamicPainter {
 
       final text = TextPainter(
         text: TextSpan(
-          text: values[(i * (values.length - 1) ~/ 24)].dx.toStringAsFixed(1),
+          text: ((values[(i * (values.length - 1) ~/ 24)].dx * 40) / 1000).toStringAsFixed(1),
           style: TextStyle(
             fontSize: 12 * textScaler,
             color: Colors.white,

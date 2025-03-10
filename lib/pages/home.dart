@@ -1,12 +1,14 @@
+import 'package:dark_validator/services/algo.dart';
 import 'package:dark_validator/services/feeder.dart';
 import 'package:dark_validator/services/time.dart';
 import 'package:dark_validator/widgets/chart.dart';
 import 'package:dark_validator/widgets/chart_stream.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gap/gap.dart';
 
 final paths = [
-  'assets/raw/20240613_215311_DDT.edf',
+  'assets/raw/20240613_231150_DDT.edf',
 ];
 
 class Home extends ConsumerStatefulWidget {
@@ -17,6 +19,12 @@ class Home extends ConsumerStatefulWidget {
 }
 
 class _HomeState extends ConsumerState<Home> {
+  final feeder = feederEdfSignalProvider(edfFilePath: paths[0], start: 10000);
+  final algos = <String, AlgoSignalProvider>{
+    'aboveZero': algoSignalProvider(id: '0'),
+    'derivative': algoSignalProvider(id: '1', bufferSize: 10),
+  };
+
   @override
   void initState() {
     super.initState();
@@ -26,49 +34,85 @@ class _HomeState extends ConsumerState<Home> {
 
   Future<void> _update() async {
     await Future.delayed(const Duration(milliseconds: 40));
+
     while (true) {
+      await Future.delayed(const Duration(milliseconds: 4));
       if (ref.watch(timeProvider) != 0) {
-        await ref.watch(feederEdfSignalProvider(edfFilePath: paths[0]).notifier).update();
+        await ref.read(feeder.notifier).update();
+
+        await ref.read(algos['aboveZero']!.notifier).update(
+              feeder: feeder,
+              compute: (buffer) {
+                // Check if most of the buffer is above 0
+                final pointsAboveZero = (buffer.lastOrNull?.dy ?? 0) > 0;
+                return pointsAboveZero ? 1 : 0;
+              },
+            );
+
+        await ref.read(algos['derivative']!.notifier).update(
+              feeder: feeder,
+              compute: (buffer) {
+                if (buffer.length < 2) {
+                  return 0;
+                }
+                final current = buffer.last.dy;
+                final previous = buffer[buffer.length - 2].dy;
+                return current - previous;
+              },
+            );
+
         setState(() {});
       }
-
-      await Future.delayed(const Duration(milliseconds: 40));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final signal = ref.watch(feederEdfSignalProvider(edfFilePath: paths[0]));
+    final breathSignal = ref.watch(feeder);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dark Validator'),
-      ),
-      body: SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
+      body: Padding(
+        padding: const EdgeInsets.all(8),
         child: Column(
           children: [
             // Breathing
             SizedBox(
-              height: 300,
+              height: 200,
               child: Consumer(
                 builder: (context, ref, _) {
                   return ChartStream(
-                    chartData: ChartData(data: signal),
+                    label: 'Input',
+                    chartData: ChartData(data: breathSignal),
                   );
                 },
               ),
             ),
+            Container(height: 1, color: Colors.grey),
 
-            // Algo
-            SizedBox(
-              height: 300,
-              child: Consumer(
-                builder: (context, ref, _) {
-                  return ChartStream(
-                    chartData: ChartData(data: signal),
-                  );
-                },
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: Column(
+                  children: [
+                    for (final algo in algos.entries) ...[
+                      const Gap(16),
+                      SizedBox(
+                        height: 300,
+                        child: Consumer(
+                          builder: (context, ref, _) {
+                            final algoSignal = ref.watch(algo.value);
+
+                            return ChartStream(
+                              label: algo.key,
+                              chartData: ChartData(data: algoSignal),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 1000)
+                  ],
+                ),
               ),
             ),
           ],
@@ -78,24 +122,6 @@ class _HomeState extends ConsumerState<Home> {
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // Column(
-          //   mainAxisAlignment: MainAxisAlignment.end,
-          //   children: [
-          //     // Speed up or down
-          //     FloatingActionButton(
-          //       heroTag: 'speed_up',
-          //       onPressed: () => ref.read(timeProvider.notifier).update(0.1),
-          //       child: const Icon(Icons.add, size: 12),
-          //     ),
-          //     const SizedBox(height: 16),
-          //     FloatingActionButton(
-          //       heroTag: 'speed_down',
-          //       onPressed: () => ref.read(timeProvider.notifier).update(-0.1),
-          //       child: const Icon(Icons.remove, size: 12),
-          //     ),
-          //   ],
-          // ),
-          // const SizedBox(width: 16),
           FloatingActionButton(
             heroTag: 'pause',
             onPressed: () {

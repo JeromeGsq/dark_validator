@@ -6,7 +6,7 @@ part of 'time.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$timeHash() => r'2fcd844f63cf88fb449b6e20cb96d4e74e1cd12a';
+String _$timeHash() => r'be7fc4eb8e3988561ad41dd73c60ec9e090bee2b';
 
 /// See also [Time].
 @ProviderFor(Time)
