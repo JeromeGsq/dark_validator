@@ -63,6 +63,7 @@ class ChartEdf extends ConsumerWidget {
                 maxValue: chartData.maxValue,
                 textDirection: TextDirection.ltr,
                 textScaler: 1,
+                
               ),
             );
           },

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:dark_validator/packages/charts/static_custom_painter.dart';
 import 'package:dark_validator/packages/charts/static_line_chart/static_line_chart.dart';
 import 'package:dark_validator/utils/list.dart';
@@ -17,6 +19,7 @@ class ChartStreamZoom extends _$ChartStreamZoom {
 
   void update(int value) {
     state = state + value;
+    state = max(100, state);
   }
 }
 
@@ -25,11 +28,14 @@ class ChartStream extends ConsumerWidget {
     super.key,
     required this.chartData,
     this.label,
+    this.minValue,
+    this.maxValue,
   });
 
   final ChartData chartData;
   final String? label;
-
+  final double? minValue;
+  final double? maxValue;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final values = chartData.data.safeSublist(chartData.data.length - ref.watch(chartStreamZoomProvider), chartData.data.length);
@@ -44,8 +50,8 @@ class ChartStream extends ConsumerWidget {
             endZoomablePoint: null,
             subValues: const [],
             title: label ?? '',
-            minValue: chartData.minValue,
-            maxValue: chartData.maxValue,
+            minValue: minValue ?? chartData.minValue - 0.1,
+            maxValue: maxValue ?? chartData.maxValue + 0.1,
             textDirection: TextDirection.ltr,
             textScaler: 1,
           ),

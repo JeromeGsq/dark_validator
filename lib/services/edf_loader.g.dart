@@ -6,7 +6,7 @@ part of 'edf_loader.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$edfFileLoaderHash() => r'c98e325d2f2bbb3499c0501e1cbedb2ca9c133ef';
+String _$edfFileLoaderHash() => r'af68937a623372e16cdff0ecc2fbe8c947a97508';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -30,7 +30,7 @@ class _SystemHash {
 }
 
 abstract class _$EdfFileLoader
-    extends BuildlessAutoDisposeAsyncNotifier<EdfData<Offset>?> {
+    extends BuildlessAsyncNotifier<EdfData<Offset>?> {
   late final String? path;
 
   FutureOr<EdfData<Offset>?> build({
@@ -81,8 +81,8 @@ class EdfFileLoaderFamily extends Family<AsyncValue<EdfData<Offset>?>> {
 }
 
 /// See also [EdfFileLoader].
-class EdfFileLoaderProvider extends AutoDisposeAsyncNotifierProviderImpl<
-    EdfFileLoader, EdfData<Offset>?> {
+class EdfFileLoaderProvider
+    extends AsyncNotifierProviderImpl<EdfFileLoader, EdfData<Offset>?> {
   /// See also [EdfFileLoader].
   EdfFileLoaderProvider({
     required String? path,
@@ -138,7 +138,7 @@ class EdfFileLoaderProvider extends AutoDisposeAsyncNotifierProviderImpl<
   }
 
   @override
-  AutoDisposeAsyncNotifierProviderElement<EdfFileLoader, EdfData<Offset>?>
+  AsyncNotifierProviderElement<EdfFileLoader, EdfData<Offset>?>
       createElement() {
     return _EdfFileLoaderProviderElement(this);
   }
@@ -159,15 +159,14 @@ class EdfFileLoaderProvider extends AutoDisposeAsyncNotifierProviderImpl<
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-mixin EdfFileLoaderRef
-    on AutoDisposeAsyncNotifierProviderRef<EdfData<Offset>?> {
+mixin EdfFileLoaderRef on AsyncNotifierProviderRef<EdfData<Offset>?> {
   /// The parameter `path` of this provider.
   String? get path;
 }
 
 class _EdfFileLoaderProviderElement
-    extends AutoDisposeAsyncNotifierProviderElement<EdfFileLoader,
-        EdfData<Offset>?> with EdfFileLoaderRef {
+    extends AsyncNotifierProviderElement<EdfFileLoader, EdfData<Offset>?>
+    with EdfFileLoaderRef {
   _EdfFileLoaderProviderElement(super.provider);
 
   @override

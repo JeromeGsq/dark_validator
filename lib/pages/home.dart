@@ -1,76 +1,152 @@
+import 'package:dark_validator/services/algo.dart';
 import 'package:dark_validator/services/feeder.dart';
+import 'package:dark_validator/services/time.dart';
 import 'package:dark_validator/widgets/chart.dart';
 import 'package:dark_validator/widgets/chart_stream.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gap/gap.dart';
 
 final paths = [
-  'assets/raw/20240613_215311_DDT.edf',
+  'assets/raw/20240613_231150_DDT.edf',
 ];
 
-class Home extends ConsumerWidget {
+class Home extends ConsumerStatefulWidget {
   const Home({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dark Validator'),
-      ),
-      body: Column(
-        children: [
-          SizedBox(
-            height: 300,
-            child: Consumer(
-              builder: (context, ref, _) {
-                final signal = ref.watch(feederEdfSignalProvider(
-                  edfFilePath: paths[0],
-                  start: 2000,
-                ));
+  ConsumerState<Home> createState() => _HomeState();
+}
 
-                return signal.when(
-                  data: (data) => ChartStream(
-                    chartData: ChartData(data: data ?? []),
-                  ),
-                  error: (err, stack) => Text('Error: $err'),
-                  loading: () => const CircularProgressIndicator(),
-                );
+class _HomeState extends ConsumerState<Home> {
+  final feeder = feederEdfSignalProvider(edfFilePath: paths[0], start: 10000);
+  final algos = <String, AlgoSignalProvider>{
+    'aboveZero': algoSignalProvider(id: '0'),
+    'derivative': algoSignalProvider(id: '1', bufferSize: 10),
+  };
+
+  @override
+  void initState() {
+    super.initState();
+
+    _update();
+  }
+
+  Future<void> _update() async {
+    await Future.delayed(const Duration(milliseconds: 40));
+
+    while (true) {
+      await Future.delayed(const Duration(milliseconds: 4));
+      if (ref.watch(timeProvider) != 0) {
+        await ref.read(feeder.notifier).update();
+
+        await ref.read(algos['aboveZero']!.notifier).update(
+              feeder: feeder,
+              compute: (buffer) {
+                // Check if most of the buffer is above 0
+                final pointsAboveZero = (buffer.lastOrNull?.dy ?? 0) > 0;
+                return pointsAboveZero ? 1 : 0;
               },
+            );
+
+        await ref.read(algos['derivative']!.notifier).update(
+              feeder: feeder,
+              compute: (buffer) {
+                if (buffer.length < 2) {
+                  return 0;
+                }
+                final current = buffer.last.dy;
+                final previous = buffer[buffer.length - 2].dy;
+                return current - previous;
+              },
+            );
+
+        setState(() {});
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final breathSignal = ref.watch(feeder);
+
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          children: [
+            // Breathing
+            SizedBox(
+              height: 200,
+              child: Consumer(
+                builder: (context, ref, _) {
+                  return ChartStream(
+                    label: 'Input',
+                    chartData: ChartData(data: breathSignal),
+                  );
+                },
+              ),
             ),
-          ),
-          // ListView.builder(
-          //   padding: const EdgeInsets.all(16),
-          //   itemCount: paths.length,
-          //   itemBuilder: (context, index) {
-          //     return SizedBox(
-          //       height: 300,
-          //       child: ChartEdf(
-          //         path: paths[index],
-          //         start: 0,
-          //         end: 1000,
-          //       ),
-          //     );
-          //   },
-          // ),
-        ],
+            Container(height: 1, color: Colors.grey),
+
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: Column(
+                  children: [
+                    for (final algo in algos.entries) ...[
+                      const Gap(16),
+                      SizedBox(
+                        height: 300,
+                        child: Consumer(
+                          builder: (context, ref, _) {
+                            final algoSignal = ref.watch(algo.value);
+
+                            return ChartStream(
+                              label: algo.key,
+                              chartData: ChartData(data: algoSignal),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 1000)
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-      floatingActionButton: Column(
+      floatingActionButton: Row(
         mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           FloatingActionButton(
-            heroTag: 'zoom_in',
+            heroTag: 'pause',
             onPressed: () {
-              ref.read(chartStreamZoomProvider.notifier).update(-50);
+              ref.read(timeProvider.notifier).toggle();
             },
-            child: const Icon(Icons.add),
+            child: ref.watch(timeProvider) == 0 ? const Icon(Icons.play_arrow) : const Icon(Icons.pause),
           ),
-          const SizedBox(height: 16),
-          FloatingActionButton(
-            heroTag: 'zoom_out',
-            onPressed: () {
-              ref.read(chartStreamZoomProvider.notifier).update(50);
-            },
-            child: const Icon(Icons.remove),
+          const SizedBox(width: 16),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text('Zoom: ${ref.watch(chartStreamZoomProvider)}'),
+              const SizedBox(height: 16),
+              FloatingActionButton(
+                heroTag: 'zoom_in',
+                onPressed: () => ref.read(chartStreamZoomProvider.notifier).update(-50),
+                child: const Icon(Icons.add),
+              ),
+              const SizedBox(height: 16),
+              FloatingActionButton(
+                heroTag: 'zoom_out',
+                onPressed: () => ref.read(chartStreamZoomProvider.notifier).update(50),
+                child: const Icon(Icons.remove),
+              ),
+            ],
           ),
         ],
       ),

@@ -6,6 +6,7 @@ analyzer:
     todo: warning
     invalid_annotation_target: ignore
     prefer_foreach: ignore
+    always_put_control_body_on_new_line: ignore
   exclude:
     - 'bin/cache/**'
     - 'lib/packages/edf_reader_writer/*'
