@@ -12,6 +12,9 @@ final paths = [
   'assets/raw/20240613_231150_DDT.edf',
 ];
 
+final slopeSensitivityProvider = StateProvider<double>((ref) => 0.3);
+double? prevSmoothed;
+
 class Home extends ConsumerStatefulWidget {
   const Home({super.key});
 
@@ -24,7 +27,11 @@ class _HomeState extends ConsumerState<Home> {
   final algos = <String, AlgoSignalProvider>{
     'aboveZero': algoSignalProvider(id: '0'),
     'derivative': algoSignalProvider(id: '1', bufferSize: 10),
+    'slopeUp': algoSignalProvider(id: '2', bufferSize: 2000),
   };
+
+  // Maintain state using a static variable (persists between calls)
+  bool isGoingUp = false;
 
   @override
   void initState() {
@@ -35,12 +42,6 @@ class _HomeState extends ConsumerState<Home> {
 
   Future<void> _update() async {
     await Future.delayed(const Duration(milliseconds: 40));
-
-    // 0 == 100000000000ms
-    // 1  == 40ms
-    // 2 == 20ms
-    // 3 == 10ms
-
     while (true) {
       final timeValue = ref.read(timeProvider);
       final delay = switch (timeValue) {
@@ -81,9 +82,26 @@ class _HomeState extends ConsumerState<Home> {
               if (buffer.length < 2) {
                 return 0;
               }
+
               final current = buffer.last.dy;
               final previous = buffer[buffer.length - 2].dy;
               return current - previous;
+            },
+          );
+
+      await ref.read(algos['slopeUp']!.notifier).update(
+            feeder: feeder,
+            compute: (buffer) {
+              const size = 200;
+              if (buffer.length < size) {
+                return 0;
+              }
+
+              // return 1, if the derivate is positive during the last 1000 samples
+              final derivate = ref.read(algos['derivative']!);
+              final last1000 = derivate.take(derivate.length - size).toList();
+              final positive = last1000.every((e) => e.dy > 0);
+              return positive ? 1 : 0;
             },
           );
 
@@ -170,6 +188,17 @@ class _HomeState extends ConsumerState<Home> {
             value: '${ref.watch(chartStreamTimePaddingProvider)}',
             upper: () => ref.read(chartStreamTimePaddingProvider.notifier).zoomOut(),
             lower: () => ref.read(chartStreamTimePaddingProvider.notifier).zoomIn(),
+          ),
+          const SizedBox(width: 16),
+          ArrowValue(
+            label: 'Sensitivity',
+            value: '${ref.watch(slopeSensitivityProvider).toStringAsFixed(2)}',
+            upper: () => ref.read(slopeSensitivityProvider.notifier).update(
+                  (s) => (s + 0.05).clamp(0.05, 0.95),
+                ),
+            lower: () => ref.read(slopeSensitivityProvider.notifier).update(
+                  (s) => (s - 0.05).clamp(0.05, 0.95),
+                ),
           ),
         ],
       ),
