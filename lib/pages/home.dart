@@ -5,6 +5,7 @@ import 'package:dark_validator/widgets/chart.dart';
 import 'package:dark_validator/widgets/chart_stream.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gap/gap.dart';
 
 class Home extends ConsumerStatefulWidget {
   const Home({super.key});
@@ -40,9 +41,28 @@ class _HomeState extends ConsumerState<Home> with SingleTickerProviderStateMixin
             label: '1',
             chartData: ChartData(data: breathingFeeder.value?.buffer ?? []),
           ),
-          ChartStream(
-            label: '2',
-            chartData: ChartData(data: heartRateFeeder.value?.buffer ?? []),
+          Container(height: 1, color: Colors.white),
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+                children: [
+                  ChartStream(
+                    label: 'sin',
+                    chartData: ChartData(data: sinFeeder.value?.buffer ?? []),
+                  ),
+                  ChartStream(
+                    label: 'sum',
+                    chartData: ChartData(data: sumSinBreath.buffer),
+                  ),
+                  ChartStream(
+                    label: 'rampUp',
+                    chartData: ChartData(data: rampUpBreath.buffer),
+                  ),
+                  const Gap(1024),
+                ],
+              ),
+            ),
           ),
         ],
       ),
