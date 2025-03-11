@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dark_validator/main.dart';
 import 'package:dark_validator/packages/charts/static_custom_painter.dart';
 import 'package:dark_validator/packages/charts/static_line_chart/static_line_chart.dart';
 import 'package:dark_validator/utils/list.dart';
@@ -82,29 +83,33 @@ class ChartStream extends ConsumerWidget {
   final String? label;
   final double? minValue;
   final double? maxValue;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final timePadding = ref.watch(chartStreamTimePaddingProvider);
-    final zoom = ref.watch(chartStreamZoomProvider);
+    final timePadding = config.timePadding;
+    final zoom = config.zoom;
     final values = chartData.data.safeSublist(chartData.data.length - zoom - timePadding, chartData.data.length - timePadding);
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return StaticCustomPaint(
-          size: Size(constraints.maxWidth, constraints.maxHeight),
-          painter: StaticChartLinePainter(
-            values: values..sort((a, b) => a.dx.compareTo(b.dx)),
-            startZoomablePoint: null,
-            endZoomablePoint: null,
-            subValues: const [],
-            title: label ?? '',
-            minValue: minValue ?? chartData.minValue - 0.1,
-            maxValue: maxValue ?? chartData.maxValue + 0.1,
-            textDirection: TextDirection.ltr,
-            textScaler: 1,
-          ),
-        );
-      },
+    return SizedBox(
+      height: 200,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return StaticCustomPaint(
+            size: Size(constraints.maxWidth, constraints.maxHeight),
+            painter: StaticChartLinePainter(
+              values: values..sort((a, b) => a.dx.compareTo(b.dx)),
+              startZoomablePoint: null,
+              endZoomablePoint: null,
+              subValues: const [],
+              title: label ?? '',
+              minValue: minValue ?? chartData.minValue - 0.1,
+              maxValue: maxValue ?? chartData.maxValue + 0.1,
+              textDirection: TextDirection.ltr,
+              textScaler: 1,
+            ),
+          );
+        },
+      ),
     );
   }
 }

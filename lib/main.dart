@@ -1,9 +1,26 @@
 import 'package:dark_validator/pages/home.dart';
+import 'package:dark_validator/services/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+final config = Config();
+final core = Core();
+
+final tickProvider = StateProvider<int>((ref) => 0);
+
 void main() {
-  runApp(const App());
+  final container = ProviderContainer();
+
+  core.onTickChanged = (tick) {
+    container.read(tickProvider.notifier).state = tick;
+  };
+
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: const App(),
+    ),
+  );
 }
 
 class App extends StatelessWidget {

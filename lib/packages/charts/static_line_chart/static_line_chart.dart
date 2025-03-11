@@ -257,6 +257,10 @@ class StaticChartLinePainter extends StaticAndDynamicPainter {
         continue;
       }
 
+      if (valueWidth.isInfinite) {
+        return;
+      }
+
       canvas.drawLine(
         Offset(
           pHorizontal + x1 * valueWidth,

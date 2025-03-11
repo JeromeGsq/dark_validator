@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 
-class ArrowValue extends StatelessWidget {
+class ArrowValue<T> extends StatelessWidget {
   const ArrowValue({
     super.key,
     required this.label,
+    required this.initialValue,
     required this.value,
+    required this.reset,
     required this.upper,
     required this.lower,
   });
 
   final String label;
+  final T initialValue;
   final String value;
+  final ValueChanged<T> reset;
   final VoidCallback upper;
   final VoidCallback lower;
 
@@ -31,30 +35,33 @@ class ArrowValue extends StatelessWidget {
             onPressed: lower,
             splashRadius: 24,
           ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  '$label',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
+          TextButton(
+            onPressed: () => reset(initialValue),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    '$label',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  '$value',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    '$value',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.arrow_right),
