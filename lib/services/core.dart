@@ -9,10 +9,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 AsyncValue<Feeder> breathingFeeder = const AsyncLoading();
 AsyncValue<Feeder> heartRateFeeder = const AsyncLoading();
-
 AsyncValue<Feeder> sinFeeder = const AsyncLoading();
+
 final sumSinBreath = SumSinBreath();
 final rampUpBreath = RampUpBreath();
+final derivativeBreath = DerivativeBreath();
 
 class Core {
   int tick = 0;
@@ -34,6 +35,7 @@ class Core {
     sinFeeder.value?.update();
     sumSinBreath.update();
     rampUpBreath.update();
+    derivativeBreath.update();
   }
 
   Future<void> run() async {

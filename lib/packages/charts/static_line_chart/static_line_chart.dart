@@ -251,8 +251,8 @@ class StaticChartLinePainter extends StaticAndDynamicPainter {
       final x1 = values[i].dx - start;
       final x2 = values[i + 1].dx - start;
 
-      final y1 = (maxValue - values[i].dy.toDouble()) / (maxValue - minValue);
-      final y2 = (maxValue - values[i + 1].dy.toDouble()) / (maxValue - minValue);
+      final y1 = (values[i].dy.toDouble() - minValue) / (maxValue - minValue);
+      final y2 = (values[i + 1].dy.toDouble() - minValue) / (maxValue - minValue);
       if (y1.isNaN || y2.isNaN) {
         continue;
       }
@@ -264,11 +264,11 @@ class StaticChartLinePainter extends StaticAndDynamicPainter {
       canvas.drawLine(
         Offset(
           pHorizontal + x1 * valueWidth,
-          size.height - (size.height * y1 - pVertical),
+          pVertical + (size.height - 2 * pVertical) * (1 - y1),
         ),
         Offset(
           pHorizontal + x2 * valueWidth,
-          size.height - (size.height * y2 - pVertical),
+          pVertical + (size.height - 2 * pVertical) * (1 - y2),
         ),
         style,
       );

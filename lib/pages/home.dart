@@ -59,6 +59,10 @@ class _HomeState extends ConsumerState<Home> with SingleTickerProviderStateMixin
                     label: 'rampUp',
                     chartData: ChartData(data: rampUpBreath.buffer),
                   ),
+                  ChartStream(
+                    label: 'derivative',
+                    chartData: ChartData(data: derivativeBreath.buffer),
+                  ),
                   const Gap(1024),
                 ],
               ),
